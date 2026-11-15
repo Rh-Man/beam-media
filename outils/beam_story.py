@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Beam - story "Les 3 pepites du jour". usage: python3 beam_story.py OUTDIR [YYYY-MM-DD]
-# Writes OUTDIR/1_selection.png + 2..4_pepite_N.png (1080x1920) and OUTDIR/caption.txt
+# Writes OUTDIR/1_selection.png + 2..4_pepite_N.png (Instagram stories), tiktok_*.jpg (TikTok safe-zone layout) and caption.txt
 import json, sys, os, re, math, io, html, datetime, urllib.request
 from PIL import Image, ImageFilter, ImageStat
 
@@ -94,7 +94,7 @@ cards = ''
 for i, c in enumerate(picked):
     sz = nice_size(c.get('size')); op = c.get('originalPrice') if (c.get('originalPrice') or 0) > c['price'] else None
     title = re.sub(r'[^\w\s&|()\'’.,!/+-]', '', c['title']).strip(' |-')
-    cards += f'''<div class="card" style="top:{520 + i * 355}px"><div class="ph"><img src="file://{c['_img']}"><div class="tier">{E(c['_tier'])}</div></div>
+    cards += f'''<div class="card c{i}" style="top:{520 + i * 355}px"><div class="ph"><img src="file://{c['_img']}"><div class="tier">{E(c['_tier'])}</div></div>
 <div class="info"><div class="t">{E(title)}</div><div class="p"><b>{fmt(c['price'])}</b>{f'<s>{fmt(op)}</s>' if op else ''}</div>
 <div class="chips">{f'<span>Taille {E(sz)}</span>' if sz else ''}<span>{COND_FR.get(c['condition'], '')}</span></div></div></div>'''
 
@@ -171,21 +171,51 @@ h2{{font-family:Lora,serif;font-weight:600;font-size:58px;line-height:1.1;max-wi
 <div id="cta"><div class="pill">Dispo sur beam.sn</div><div class="by">Vendu par<br>@{E(c['userUsername'])}</div></div>
 </div></body></html>''')
 
-hp = os.path.join(OUT, 'story.html'); open(hp, 'w').write(page_html)
+
+# TikTok : zone sûre (onglets en haut, légende en bas, boutons à droite)
+TT_RECAP = """<style>
+#top{top:235px!important;right:190px!important}
+h1{font-size:62px!important} .over{font-size:22px!important} .date{font-size:26px!important}
+#logo{width:84px!important;height:89px!important}
+.card{left:56px!important;right:190px!important;height:245px!important}
+.c0{top:475px!important}.c1{top:738px!important}.c2{top:1001px!important}
+.ph{width:245px!important} .info{padding:20px 24px!important}
+.t{font-size:34px!important} .p b{font-size:44px!important} .p s{font-size:22px!important}
+.chips{margin-top:10px!important} .chips span{font-size:20px!important;padding:5px 14px!important}
+.tier{font-size:18px!important;padding:6px 12px!important}
+#cta{top:1268px!important;left:56px!important;right:190px!important}
+#cta .pill{font-size:32px!important;padding:14px 38px!important} #cta p{display:none!important}
+</style></body>"""
+TT_DETAIL = """<style>
+#top{top:235px!important;right:190px!important}
+#ph{top:300px!important;left:56px!important;right:190px!important;height:620px!important}
+#price{bottom:auto!important;top:840px!important;right:210px!important;padding:16px 26px!important}
+#price b{font-size:50px!important} #price s{font-size:22px!important}
+#info{top:960px!important;left:56px!important;right:190px!important}
+h2{font-size:44px!important} .chips{margin-top:14px!important} .chips span{font-size:22px!important;padding:6px 16px!important}
+.desc{font-size:24px!important;margin-top:14px!important;-webkit-line-clamp:3!important}
+#cta{top:1270px!important;left:56px!important;right:190px!important}
+#cta .pill{font-size:28px!important;padding:14px 30px!important} #cta .by{font-size:20px!important}
+</style></body>"""
 
 from playwright.sync_api import sync_playwright
 with sync_playwright() as pw:
     b = pw.chromium.launch(); pg = b.new_page(viewport={'width': 1080, 'height': 1920})
-    pg.goto('file://' + hp); pg.evaluate('document.fonts.ready'); pg.wait_for_timeout(500)
-    pg.screenshot(path=os.path.join(OUT, '1_selection.png'))
+    def shot(html_text, name):
+        fp = os.path.join(OUT, name + '.html'); open(fp, 'w').write(html_text)
+        pg.goto('file://' + fp); pg.evaluate('document.fonts.ready'); pg.wait_for_timeout(400)
+        pg.screenshot(path=os.path.join(OUT, name + '.png'))
+    shot(page_html, '1_selection')
+    shot(page_html.replace('</body>', TT_RECAP), 'tiktok_1_selection')
     for i, h in enumerate(details):
-        dp = os.path.join(OUT, f'detail_{i + 1}.html'); open(dp, 'w').write(h)
-        pg.goto('file://' + dp); pg.evaluate('document.fonts.ready'); pg.wait_for_timeout(300)
-        pg.screenshot(path=os.path.join(OUT, f'{i + 2}_pepite_{i + 1}.png'))
+        shot(h, f'{i + 2}_pepite_{i + 1}')
+        shot(h.replace('</body>', TT_DETAIL), f'tiktok_{i + 2}_pepite_{i + 1}')
     b.close()
 
+# TikTok refuse le PNG : versions JPEG pour TikTok (format zone sûre)
 for n in ['1_selection'] + [f'{i + 2}_pepite_{i + 1}' for i in range(len(details))]:
-    Image.open(os.path.join(OUT, n + '.png')).convert('RGB').save(os.path.join(OUT, n + '.jpg'), quality=92)  # TikTok refuse le PNG
+    Image.open(os.path.join(OUT, 'tiktok_' + n + '.png')).convert('RGB').save(os.path.join(OUT, 'tiktok_' + n + '.jpg'), quality=92)
+    os.remove(os.path.join(OUT, 'tiktok_' + n + '.png'))
 
 cap = [f"Les 3 pépites du {date[0].lower() + date[1:]} ✨ Swipe pour voir le détail."] + [f"• {c['title'].strip()} : {fmt(c['price'])}" for c in picked] + ["Dispo sur beam.sn, lien en bio.", "", "#Beam #Dakar #Senegal #SecondeMain #ModeDakar #Friperie"]
 open(os.path.join(OUT, 'caption.txt'), 'w').write('\n'.join(cap) + '\n')

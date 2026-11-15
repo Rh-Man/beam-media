@@ -184,6 +184,9 @@ with sync_playwright() as pw:
         pg.screenshot(path=os.path.join(OUT, f'{i + 2}_pepite_{i + 1}.png'))
     b.close()
 
+for n in ['1_selection'] + [f'{i + 2}_pepite_{i + 1}' for i in range(len(details))]:
+    Image.open(os.path.join(OUT, n + '.png')).convert('RGB').save(os.path.join(OUT, n + '.jpg'), quality=92)  # TikTok refuse le PNG
+
 cap = [f"Les 3 pépites du {date[0].lower() + date[1:]} ✨ Swipe pour voir le détail."] + [f"• {c['title'].strip()} : {fmt(c['price'])}" for c in picked] + ["Dispo sur beam.sn, lien en bio.", "", "#Beam #Dakar #Senegal #SecondeMain #ModeDakar #Friperie"]
 open(os.path.join(OUT, 'caption.txt'), 'w').write('\n'.join(cap) + '\n')
 print(f"{len(items)} annonces lues, {len(cands)} retenues, {len(picked)} choisies")

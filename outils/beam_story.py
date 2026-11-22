@@ -23,6 +23,15 @@ COND = {'NEW': 2.0, 'LIKE_NEW': 1.6, 'GOOD': 1.0, 'FAIR': 0.3}
 COND_FR = {'NEW': 'Neuf', 'LIKE_NEW': 'Comme neuf', 'GOOD': 'Bon état', 'FAIR': 'État correct'}
 now = datetime.datetime.now(datetime.timezone.utc)
 EXCLUDE = set(x.strip() for x in os.environ.get('BEAM_EXCLUDE', '').split(',') if x.strip())
+# Historique : on n'affiche pas un article déjà mis en avant dans les 21 derniers jours (pepites/AAAA-MM-JJ/ids.txt)
+HIST = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'pepites')
+if os.path.isdir(HIST):
+    for d in os.listdir(HIST):
+        try: dd = datetime.date.fromisoformat(d)
+        except ValueError: continue
+        f = os.path.join(HIST, d, 'ids.txt')
+        if dd != TODAY and 0 < (TODAY - dd).days <= 21 and os.path.exists(f):
+            EXCLUDE |= set(x.strip() for x in open(f).read().split() if x.strip())
 
 def score(it):
     desc = (it.get('description') or '').strip(); title = (it.get('title') or '').strip()
@@ -219,5 +228,6 @@ for n in ['1_selection'] + [f'{i + 2}_pepite_{i + 1}' for i in range(len(details
 
 cap = [f"Les 3 pépites du {date[0].lower() + date[1:]} ✨ Swipe pour voir le détail."] + [f"• {c['title'].strip()} : {fmt(c['price'])}" for c in picked] + ["Dispo sur beam.sn, lien en bio.", "", "#Beam #Dakar #Senegal #SecondeMain #ModeDakar #Friperie"]
 open(os.path.join(OUT, 'caption.txt'), 'w').write('\n'.join(cap) + '\n')
+open(os.path.join(OUT, 'ids.txt'), 'w').write('\n'.join(c['id'] for c in picked) + '\n')
 print(f"{len(items)} annonces lues, {len(cands)} retenues, {len(picked)} choisies")
 for c in picked: print(c['id'], '|', c['_tier'], '|', c['title'].strip(), '|', c['price'], '|', c['condition'], '|', c['userUsername'], '| score', round(c['_s'], 2))

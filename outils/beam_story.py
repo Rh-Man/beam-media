@@ -17,7 +17,7 @@ while page <= 25:
     if not d['meta'].get('hasNextPage'): break
     page += 1
 
-NOT_FASHION = re.compile(r'iphone|chariot|rangement|[ée]tag[èe]re|organisateur|cuisine|vaisselle|matelas|rideau|d[ée]coration|samsung|t[ée]l[ée]phone|phone|ordinateur|laptop|\bpc\b|macbook|tablette|ipad|playstation|ps[45]|xbox|\btv\b|t[ée]l[ée]vision|console|airpods|chargeur|frigo|meuble|power\s*bank|batterie|[ée]couteur|casque|enceinte|cam[ée]ra|parfum|chauffant|douleur|r[èe]gles douloureuses|m[ée]dic|minceur', re.I)
+NOT_FASHION = re.compile(r'iphone|\blivres?\b|roman|bouquin|manuel scolaire|chariot|rangement|[ée]tag[èe]re|organisateur|cuisine|vaisselle|matelas|rideau|d[ée]coration|samsung|t[ée]l[ée]phone|phone|ordinateur|laptop|\bpc\b|macbook|tablette|ipad|playstation|ps[45]|xbox|\btv\b|t[ée]l[ée]vision|console|airpods|chargeur|frigo|meuble|power\s*bank|batterie|[ée]couteur|casque|enceinte|cam[ée]ra|parfum|chauffant|douleur|r[èe]gles douloureuses|m[ée]dic|minceur', re.I)
 LUXE = re.compile(r'louis\s*vuitton|\blv\b|gucci|dior|chanel|balenciaga|prada|herm[eè]s|versace|fendi|saint[\s-]*laurent|\bysl\b|givenchy|burberry|rolex|cartier|audemars|royal\s*oak|patek|hublot|off[- ]?white|moncler|celine|loewe|bottega|chrome\s*hearts?|amiri|stone\s*island', re.I)
 COND = {'NEW': 2.0, 'LIKE_NEW': 1.6, 'GOOD': 1.0, 'FAIR': 0.3}
 COND_FR = {'NEW': 'Neuf', 'LIKE_NEW': 'Comme neuf', 'GOOD': 'Bon état', 'FAIR': 'État correct'}
